@@ -64,6 +64,42 @@ public class Time {
         timeval addressOf(int index);
     }
 
+    @CStruct(addStructKeyword = true)
+    public interface timespec extends PointerBase {
+        @CField
+        long tv_sec();
+
+        @CField
+        void set_tv_sec(long value);
+
+        @CField
+        @AllowWideningCast
+        long tv_nsec();
+
+        @CField
+        @AllowNarrowingCast
+        void set_tv_nsec(long value);
+
+        timespec addressOf(int index);
+    }
+
+    @CStruct(addStructKeyword = true)
+    public interface itimerspac extends PointerBase {
+        @CField
+        timespec it_interval;
+
+        @CField
+        void set_it_interval(timespec value);
+
+        @CField
+        timespec it_value;
+
+        @CField
+        void set_it_value(timespec value);
+
+        itimerspec addressOf(int index);
+    }
+
     public interface timezone extends PointerBase {
     }
 
