@@ -641,6 +641,21 @@ public class SubstrateJVM {
     }
 
     @Uninterruptible(reason = "Called from uninterruptible code.", mayBeInlined = true)
+    public boolean exceedsThreshold(JfrEvent event, long durationTicks) {
+        return eventSettings[(int) event.getId()].getThresholdTicks() <= durationTicks;
+    }
+
+    @Uninterruptible(reason = "Called from uninterruptible code.", mayBeInlined = true)
+    public boolean shouldEmit(JfrEvent event) {
+        return isRecording() && isEnabled(event) && !isCurrentThreadExcluded();
+    }
+
+    @Uninterruptible(reason = "Called from uninterruptible code.", mayBeInlined = true)
+    public boolean shouldEmit(JfrEvent event, long durationTicks) {
+        return isRecording() && isEnabled(event) && exceedsThreshold(event, durationTicks) && !isCurrentThreadExcluded();
+    }
+
+    @Uninterruptible(reason = "Called from uninterruptible code.", mayBeInlined = true)
     public void setLarge(JfrEvent event, boolean large) {
         eventSettings[(int) event.getId()].setLarge(large);
     }

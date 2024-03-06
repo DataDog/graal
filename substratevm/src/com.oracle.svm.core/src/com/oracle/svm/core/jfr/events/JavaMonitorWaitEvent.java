@@ -47,19 +47,22 @@ public class JavaMonitorWaitEvent {
     @Uninterruptible(reason = "Accesses a JFR buffer.")
     private static void emit0(long startTicks, Object obj, long notifier, long timeout, boolean timedOut) {
         if (JfrEvent.JavaMonitorWait.shouldEmit()) {
-            JfrNativeEventWriterData data = org.graalvm.nativeimage.StackValue.get(JfrNativeEventWriterData.class);
-            JfrNativeEventWriterDataAccess.initializeThreadLocalNativeBuffer(data);
-            JfrNativeEventWriter.beginSmallEvent(data, JfrEvent.JavaMonitorWait);
-            JfrNativeEventWriter.putLong(data, startTicks);
-            JfrNativeEventWriter.putLong(data, JfrTicks.elapsedTicks() - startTicks);
-            JfrNativeEventWriter.putEventThread(data);
-            JfrNativeEventWriter.putLong(data, SubstrateJVM.get().getStackTraceId(JfrEvent.JavaMonitorWait, 0));
-            JfrNativeEventWriter.putClass(data, obj.getClass());
-            JfrNativeEventWriter.putLong(data, notifier);
-            JfrNativeEventWriter.putLong(data, timeout);
-            JfrNativeEventWriter.putBoolean(data, timedOut);
-            JfrNativeEventWriter.putLong(data, Word.objectToUntrackedPointer(obj).rawValue());
-            JfrNativeEventWriter.endSmallEvent(data);
+            long duration = JfrTicks.elapsedTicks() - startTicks;
+            if (JfrEvent.JavaMonitorWait.exceedsThreshold(duration)) {
+                JfrNativeEventWriterData data = org.graalvm.nativeimage.StackValue.get(JfrNativeEventWriterData.class);
+                JfrNativeEventWriterDataAccess.initializeThreadLocalNativeBuffer(data);
+                JfrNativeEventWriter.beginSmallEvent(data, JfrEvent.JavaMonitorWait);
+                JfrNativeEventWriter.putLong(data, startTicks);
+                JfrNativeEventWriter.putLong(data, duration);
+                JfrNativeEventWriter.putEventThread(data);
+                JfrNativeEventWriter.putLong(data, SubstrateJVM.get().getStackTraceId(JfrEvent.JavaMonitorWait, 0));
+                JfrNativeEventWriter.putClass(data, obj.getClass());
+                JfrNativeEventWriter.putLong(data, notifier);
+                JfrNativeEventWriter.putLong(data, timeout);
+                JfrNativeEventWriter.putBoolean(data, timedOut);
+                JfrNativeEventWriter.putLong(data, Word.objectToUntrackedPointer(obj).rawValue());
+                JfrNativeEventWriter.endSmallEvent(data);
+            }
         }
     }
 }

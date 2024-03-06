@@ -61,18 +61,21 @@ public class ThreadParkEvent {
                 timeout = time;
             }
 
-            JfrNativeEventWriterData data = StackValue.get(JfrNativeEventWriterData.class);
-            JfrNativeEventWriterDataAccess.initializeThreadLocalNativeBuffer(data);
-            JfrNativeEventWriter.beginSmallEvent(data, JfrEvent.ThreadPark);
-            JfrNativeEventWriter.putLong(data, startTicks);
-            JfrNativeEventWriter.putLong(data, JfrTicks.elapsedTicks() - startTicks);
-            JfrNativeEventWriter.putEventThread(data);
-            JfrNativeEventWriter.putLong(data, SubstrateJVM.get().getStackTraceId(JfrEvent.ThreadPark, 0));
-            JfrNativeEventWriter.putClass(data, parkedClass);
-            JfrNativeEventWriter.putLong(data, timeout);
-            JfrNativeEventWriter.putLong(data, until);
-            JfrNativeEventWriter.putLong(data, Word.objectToUntrackedPointer(obj).rawValue());
-            JfrNativeEventWriter.endSmallEvent(data);
+            long duration = JfrTicks.elapsedTicks() - startTicks;
+            if (JfrEvent.ThreadPark.exceedsThreshold(duration)) {
+                JfrNativeEventWriterData data = StackValue.get(JfrNativeEventWriterData.class);
+                JfrNativeEventWriterDataAccess.initializeThreadLocalNativeBuffer(data);
+                JfrNativeEventWriter.beginSmallEvent(data, JfrEvent.ThreadPark);
+                JfrNativeEventWriter.putLong(data, startTicks);
+                JfrNativeEventWriter.putLong(data, duration);
+                JfrNativeEventWriter.putEventThread(data);
+                JfrNativeEventWriter.putLong(data, SubstrateJVM.get().getStackTraceId(JfrEvent.ThreadPark, 0));
+                JfrNativeEventWriter.putClass(data, parkedClass);
+                JfrNativeEventWriter.putLong(data, timeout);
+                JfrNativeEventWriter.putLong(data, until);
+                JfrNativeEventWriter.putLong(data, Word.objectToUntrackedPointer(obj).rawValue());
+                JfrNativeEventWriter.endSmallEvent(data);
+            }
         }
     }
 }

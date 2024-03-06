@@ -84,7 +84,7 @@ public abstract class JfrRecordingTest extends AbstractJfrTest {
     private static void enableEvents(Recording recording, String[] events) {
         /* Additionally, enable all events that the test case wants to test explicitly. */
         for (String event : events) {
-            recording.enable(event);
+            recording.enable(event).withoutThreshold();
         }
     }
 
