@@ -53,17 +53,20 @@ public class SafepointBeginEvent {
     @Uninterruptible(reason = "Accesses a JFR buffer.")
     private static void emit0(UnsignedWord safepointId, int numJavaThreads, long startTicks) {
         if (JfrEvent.SafepointBegin.shouldEmit()) {
-            JfrNativeEventWriterData data = StackValue.get(JfrNativeEventWriterData.class);
-            JfrNativeEventWriterDataAccess.initializeThreadLocalNativeBuffer(data);
+            long duration = JfrTicks.elapsedTicks() - startTicks;
+            if (JfrEvent.SafepointBegin.exceedsThreshold(duration)) {
+                JfrNativeEventWriterData data = StackValue.get(JfrNativeEventWriterData.class);
+                JfrNativeEventWriterDataAccess.initializeThreadLocalNativeBuffer(data);
 
-            JfrNativeEventWriter.beginSmallEvent(data, JfrEvent.SafepointBegin);
-            JfrNativeEventWriter.putLong(data, startTicks);
-            JfrNativeEventWriter.putLong(data, JfrTicks.elapsedTicks() - startTicks);
-            JfrNativeEventWriter.putEventThread(data);
-            JfrNativeEventWriter.putLong(data, safepointId.rawValue());
-            JfrNativeEventWriter.putInt(data, numJavaThreads);
-            JfrNativeEventWriter.putInt(data, 0); // jniCriticalThreadCount
-            JfrNativeEventWriter.endSmallEvent(data);
+                JfrNativeEventWriter.beginSmallEvent(data, JfrEvent.SafepointBegin);
+                JfrNativeEventWriter.putLong(data, startTicks);
+                JfrNativeEventWriter.putLong(data, duration);
+                JfrNativeEventWriter.putEventThread(data);
+                JfrNativeEventWriter.putLong(data, safepointId.rawValue());
+                JfrNativeEventWriter.putInt(data, numJavaThreads);
+                JfrNativeEventWriter.putInt(data, 0); // jniCriticalThreadCount
+                JfrNativeEventWriter.endSmallEvent(data);
+            }
         }
     }
 }

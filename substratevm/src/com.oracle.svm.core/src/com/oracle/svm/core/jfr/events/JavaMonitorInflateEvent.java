@@ -49,18 +49,21 @@ public class JavaMonitorInflateEvent {
     @Uninterruptible(reason = "Accesses a JFR buffer.")
     public static void emit0(Object obj, long startTicks, MonitorInflationCause cause) {
         if (JfrEvent.JavaMonitorInflate.shouldEmit()) {
-            JfrNativeEventWriterData data = StackValue.get(JfrNativeEventWriterData.class);
-            JfrNativeEventWriterDataAccess.initializeThreadLocalNativeBuffer(data);
+            long duration = JfrTicks.elapsedTicks() - startTicks;
+            if (JfrEvent.JavaMonitorInflate.exceedsThreshold(duration)) {
+                JfrNativeEventWriterData data = StackValue.get(JfrNativeEventWriterData.class);
+                JfrNativeEventWriterDataAccess.initializeThreadLocalNativeBuffer(data);
 
-            JfrNativeEventWriter.beginSmallEvent(data, JfrEvent.JavaMonitorInflate);
-            JfrNativeEventWriter.putLong(data, startTicks);
-            JfrNativeEventWriter.putLong(data, JfrTicks.elapsedTicks() - startTicks);
-            JfrNativeEventWriter.putEventThread(data);
-            JfrNativeEventWriter.putLong(data, SubstrateJVM.get().getStackTraceId(JfrEvent.JavaMonitorInflate, 0));
-            JfrNativeEventWriter.putClass(data, obj.getClass());
-            JfrNativeEventWriter.putLong(data, Word.objectToUntrackedPointer(obj).rawValue());
-            JfrNativeEventWriter.putLong(data, getId(cause));
-            JfrNativeEventWriter.endSmallEvent(data);
+                JfrNativeEventWriter.beginSmallEvent(data, JfrEvent.JavaMonitorInflate);
+                JfrNativeEventWriter.putLong(data, startTicks);
+                JfrNativeEventWriter.putLong(data, duration);
+                JfrNativeEventWriter.putEventThread(data);
+                JfrNativeEventWriter.putLong(data, SubstrateJVM.get().getStackTraceId(JfrEvent.JavaMonitorInflate, 0));
+                JfrNativeEventWriter.putClass(data, obj.getClass());
+                JfrNativeEventWriter.putLong(data, Word.objectToUntrackedPointer(obj).rawValue());
+                JfrNativeEventWriter.putLong(data, getId(cause));
+                JfrNativeEventWriter.endSmallEvent(data);
+            }
         }
     }
 
